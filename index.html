@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>环化大会专家查询 V6.0</title>
+    <style>
+        body { 
+            font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; 
+            background-color: #F2F2F7; 
+            margin: 0; padding: 0; 
+            color: #000;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        /* --- V6.0 新增：微信引导页面的样式 --- */
+        #wechat-guide {
+            display: none; /* 默认隐藏 */
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #fff;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 10000;
+        }
+        #wechat-guide h2 {
+            font-size: 22px;
+            margin-top: 20px;
+            color: #333;
+        }
+        #wechat-guide p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+            margin-top: 15px;
+        }
+        #wechat-guide img.icon {
+            width: 80px;
+            margin-top: 30px;
+            opacity: 0.7;
+        }
+        .arrow {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            width: 60px;
+            animation: point-up-right 1.5s infinite;
+        }
+        @keyframes point-up-right {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-5px) translateX(5px); }
+        }
+
+        /* 主应用样式 */
+        #app-main { display: block; /* 默认显示 */ }
+        .header {
+            background-color: #fff;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0 0 10px 0; font-size: 20px; text-align: center; }
+        .search-box { display: flex; gap: 8px; }
+        input { 
+            flex: 1;
+            height: 44px;
+            padding: 0 12px; 
+            font-size: 16px; 
+            border: 1px solid #C6C6C8; 
+            border-radius: 8px; 
+            background-color: #F2F2F7; 
+            appearance: none;
+        }
+        button {
+            height: 44px;
+            padding: 0 20px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        #list { padding: 15px; padding-bottom: 60px; }
+        .card-link { /* 恢复使用 a 标签，因为在标准浏览器中它最可靠 */
+            display: block;
+            text-decoration: none;
+            background: white; 
+            border-radius: 10px; 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-link:active { background-color: #E5E5EA; transform: scale(0.99); }
+        .name { font-size: 18px; font-weight: bold; color: #000; margin-bottom: 4px; }
+        .unit { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .tag {
+            display: inline-block; 
+            font-size: 12px; 
+            padding: 3px 8px;
+            border-radius: 4px; 
+            background-color: #EBF3FF; 
+            color: #007AFF;
+        }
+        .tag.gray { background-color: #F2F2F7; color: #8E8E93; }
+        .tip { text-align: center; color: #999; margin-top: 50px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <!-- V6.0 新增：微信环境引导页 -->
+    <div id="wechat-guide">
+        <img class="arrow" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2NS40MiAyMy4zM2MtMi4yNS0yLjItNS45My0yLjItOC4xOCAwbC0xOC40IDE4LjQtMy44My0zLjgzYTYuNTggNi41OCAwIDAwLTkuMyAwbC0xMC4wOCAxMC4wOGE2LjU4IDYuNTggMCAwMDwwIDkuM2w0MC4yOCA0MC4yOGE2LjU4IDYuNTggMCAwMDkuMyAwbDEwLjA4LTEwLjA4YTYuNTggNi41OCAwIDAwMC05LjNsLTMuODMtMy44MyAxOC40LTE4LjRhNi41OCA2LjU4IDAgMDAwLTkuMyIgZmlsbD0iIzgwODA4MCIvPjxwYXRoIGQ9Ik0xNzMgMTIzYy0yMC40MyAwLTM5LjI1IDguNzMtNTIuNDcgMjIuNzgtMTMuMjIgMTQuMDUtMjAuNTMgMzQuMTUtMjAuNTMgNTQuMjJoMTQ2di0ySDk5LjljLjE2LTIzLjU1IDkuNzQtNDAuNDMgMjEuNDgtNTEuNTcgMTEuNzQtMTEuMTUgMjguNzItMTguNDMgNDguNDItMTguNDMgMS42NiAwIDMtMS4zNCAzLTNzLTEuMzQtMy0zLTN6IiBmaWxsPSIjODA4MDgwIi8+PC9zdmc+" alt="arrow">
+        <img class="icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiM4ODgiIGQ9Ik0xMS4zNzcgMi4yNThjLjM0Ny0uMTczLjcxMy0uMTczIDEuMDYgMGw4LjUgNC4yNWEuNjI1LjYyNSAwIDAxLjMyNS41NjN2OS44NTVhLjYyNS42MjUgMCAwMS0uMzI1LjU2M2wtOC41IDQuMjVjLS4zNDcuMTczLS43MTMuMTczLTEuMDYgMEwyLjg3NSAxNy41Yy0uMTg1LS4wOTItLjMyNS0uMjg1LS4zMjUtLjU2M1Y3LjA4YzAtLjI3OC4xNC0uNDcxLjMyNS0uNTYzbDguNS00LjI1NUExLjI1IDEuMjUgMCAwMTExLjM3NyAyLjI1OFpNNy41IDEwaDEuNzV2NC41SDcuNVptOC43NS0xLjI1YTEuMjUgMS4yNSAwIDAwLTEuMjUtMS4yNWgtMi41YTEuMjUgMS4yNSAwIDAwLTEuMjUgMS4yNXY1YTEuMjUgMS4yNSAwIDAwIDEuMjUgMS4yNWgyLjVhMS4yNSAxLjI1AwIDAwIDEuMjUtMS4yNVoiLz48L3N2Zz4=" alt="安全浏览">
+        <h2>请使用浏览器打开</h2>
+        <p>为保证最佳体验，微信内无法直接访问。</p>
+        <p>请点击右上角 <strong style="color: #007AFF;">...</strong> 按钮，然后选择“<strong style="color: #007AFF;">在浏览器中打开</strong>”。</p>
+    </div>
+
+    <!-- 主应用内容 -->
+    <div id="app-main">
+        <div class="header">
+            <h1>🎓 专家查询系统</h1>
+            <div class="search-box">
+                <input type="text" id="inp" placeholder="点击此处 开启语音/输入..." oninput="doSearch()">
+                <button onclick="doSearch()">搜索</button>
+            </div>
+        </div>
+
+        <div id="list">
+            <div class="tip" id="status">正在加载数据...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- V6.0 核心逻辑：检测微信环境 ---
+        function isWeChat() {
+            const ua = navigator.userAgent.toLowerCase();
+            return ua.includes('micromessenger');
+        }
+
+        if (isWeChat()) {
+            // 如果是微信，隐藏主应用，显示引导页
+            document.getElementById('app-main').style.display = 'none';
+            document.getElementById('wechat-guide').style.display = 'block';
+        } else {
+            // 如果不是微信（是普通浏览器），则执行正常的程序逻辑
+            
+            // --- 完整数据区域 ---
+            const data = [
+                {n:"李教授", u:"清华大学", l:"https://www.tsinghua.edu.cn"},
+                {n:"王博士", u:"北京大学", l:""}, 
+                {n:"AnneImig", u:"南方科技大学", l:"https://www.researchgate.net/profile/Anne-Imig"},
+                {n:"白朗明", u:"哈尔滨工业大学", l:"https://baike.baidu.com/item/白朗明"},
+                {n:"卞振锋", u:"上海师范大学", l:"http://teacher.shnu.edu.cn/ccms/bzf/list.psp"},
+                {n:"蔡纯", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/caichun/zh_CN/index.htm"},
+                {n:"曹国栋", u:"中国地质大学（武汉）", l:""},
+                {n:"曹文庚", u:"中国地质科学院水文地质环境地质研究所", l:"http://www.iheg.cgs.gov.cn/kydw/bssdaoshi/202503/t20250314_782694.html"},
+                {n:"曹心德", u:"上海交通大学", l:"https://sese.sjtu.edu.cn/faculty/view/3"},
+                {n:"曾阳", u:"山东大学", l:"https://www.baidu.com/s?wd=山东大学+曾阳"},
+                {n:"曾志远", u:"香港城市大学", l:"https://www.cityu.edu.hk/"},
+                {n:"常化振", u:"中国人民大学", l:"https://envi.ruc.edu.cn/jszy/chz/"},
+                {n:"陈博磊", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~0082350"},
+                {n:"陈成", u:"浙江师范大学", l:"https://mypage.zjnu.edu.cn/20214829/zh_CN/index.htm"},
+                {n:"陈达", u:"暨南大学", l:"https://cec.jnu.edu.cn/2024/0710/c41084a817766/page1.htm"},
+                {n:"陈飞", u:"重庆大学", l:"https://huanjing.cqu.edu.cn/info/1144/4064.htm"},
+                {n:"程芳琴", u:"山西大学", l:"http://hzy.sxu.edu.cn/szdw/hjgcx/jiaos2/e5bedf30ec234d2fb80fa1824f07f8d4.htm"},
+                {n:"陈冠益", u:"天津大学", l:"http://faculty.tju.edu.cn/037974/zh_CN/zhym/19549/list/index.htm"},
+                {n:"陈国胜", u:"中山大学", l:"https://ce.sysu.edu.cn/zh-hans/teacher/7986"},
+                {n:"程巍", u:"哈尔滨工业大学", l:"http://mjgroup.hit.edu.cn/2022/0221/c14452a362439/page.htm"},
+                {n:"程毅康", u:"南京炭合创新科技有限公司", l:"https://aiqicha.baidu.com/"},
+                {n:"程占军", u:"天津大学", l:"http://faculty.tju.edu.cn/146153/zh_CN/index.htm"},
+                {n:"陈洪", u:"南方科技大学", l:"https://ese.sustech.edu.cn/wap/content/teacher2/nid/101/id/43.html"},
+                {n:"陈洁", u:"浙江大学", l:"https://person.zju.edu.cn/0621608"},
+                {n:"陈洁洁", u:"中国科学技术大学", l:"https://faculty.ustc.edu.cn/~B3EBrm/zh_CN/index.htm"},
+                {n:"陈雷剑", u:"香港浸会大学", l:"https://www.sci.hkbu.edu.hk/press-releases/891?lang=zh"},
+                {n:"陈联国", u:"中国科学院水生生物研究所", l:"https://people.ucas.ac.cn/~0063966"},
+                {n:"陈荣", u:"西安建筑科技大学", l:"https://www.baidu.com/s?wd=西安建筑科技大学+陈荣"},
+                {n:"陈诗", u:"武汉理工大学", l:"http://sccels.whut.edu.cn/szdw/qtjs/202510/t20251031_1354175.shtml"},
+                {n:"陈威", u:"南开大学", l:"https://env.nankai.edu.cn/2019/0612/c14180a177266/page.htm"},
+                {n:"陈雅欣", u:"复旦大学", l:"https://baike.baidu.com/item/%E9%99%88%E9%9B%85%E6%AC%A3/65388511"},
+                {n:"陈银广", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zyjs/js/C/cyg.htm"},
+                {n:"陈志刚", u:"重庆理工大学", l:"https://cl.cqut.edu.cn/info/1128/4021_2.htm"},
+                {n:"陈仲晗", u:"生态环境部华南环境科学研究所", l:"https://www.scies.org/gzdt/kxyjdt/202311/t20231128_1057476.shtml"},
+                {n:"池卦", u:"河海大学", l:""},
+                {n:"崔月华", u:"广东新宝堂生物科技有限公司", l:"https://www.xinhui.gov.cn/zwgk/xhdt/bddt/content/mpost_3369193.html"},
+                {n:"戴恒", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/daiheng/zh_CN/"},
+                {n:"戴若彬", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zyjs/fjs_fyjy_/D/drl.htm"},
+                {n:"戴晓虎", u:"同济大学", l:"https://sese.tongji.edu.cn/info/1320/6798.htm"},
+                {n:"单玉龙", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~0079284"},
+                {n:"邓凤霞", u:"哈尔滨工业大学", l:"https://homepage.hit.edu.cn/dengfengxia?lang=zh"},
+                {n:"丁晨", u:"中国地质大学（武汉）", l:""},
+                {n:"董发勤", u:"西南科技大学", l:"https://www.swust.edu.cn/_s2/2007/0615/c157a218/page.psp"},
+                {n:"段磊", u:"长安大学", l:"https://js.chd.edu.cn/hjkxygcxy/dl_7400/list.htm"},
+                {n:"方晶云", u:"中山大学", l:"https://sese.sysu.edu.cn/teacher/4031"},
+                {n:"方婷", u:"香港科技大学（广州）", l:"https://facultyprofiles.hkust-gz.edu.cn/faculty-personal-page/FANG-Ting/tingfang"},
+                {n:"方战强", u:"华南师范大学", l:"http://soe.scnu.edu.cn/a/20191115/97.html"},
+                {n:"冯春华", u:"华南理工大学", l:"https://www2.scut.edu.cn/cese/2020/0820/c27847a394970/page.htm"},
+                {n:"付亮", u:"东北师范大学", l:"https://hjxy.nenu.edu.cn/info/1161/3449.htm"},
+                {n:"甘翠", u:"中国地质大学（武汉）", l:""},
+                {n:"高冠道", u:"南京大学", l:"https://pangroup.nju.edu.cn/gaoguandao/mainm.htm"},
+                {n:"高志鹏", u:"中国地质大学（北京）", l:"https://scholar.cugb.edu.cn/scholar/scholarDetail/2826.shtml"},
+                {n:"耿柠波", u:"大连化学物理研究所", l:"https://people.ucas.ac.cn/~gengningbo"},
+                {n:"关清卿", u:"新疆大学", l:"https://ogfc.xju.edu.cn/info/1050/1593.htm"},
+                {n:"关小红", u:"华东师范大学/同济大学", l:"https://faculty.ecnu.edu.cn/_s31/gxh2/main.psp"},
+                {n:"郭浩", u:"清华大学深圳国际研究生院", l:"https://www.x-mol.com/university/faculty/373549"},
+                {n:"郭华明", u:"中国地质大学（北京）", l:"https://jgb.cugb.edu.cn/bdxf/44768.jhtml"},
+                {n:"郭彦炳", u:"华中师范大学", l:"https://guogroup.ccnu.edu.cn/info/1759/3331.htm"},
+                {n:"郭雨琼", u:"山西大学", l:"http://zxxy.sxu.edu.cn/szdw/wgzx/b0960aa1452d4f2687cda870bb64e294.htm"},
+                {n:"郭芷琳", u:"南方科技大学", l:"https://ese.sustech.edu.cn/wap/content/teacher2/nid/101/id/33.html"},
+                {n:"辜小玲", u:"中国科学院生态环境研究中心", l:""},
+                {n:"谷晓松", u:"南方科技大学", l:"https://ese.sustech.edu.cn/content/index/nid/172/id/3091.html"},
+                {n:"顾逸凡", u:"同济大学", l:"https://sese.tongji.edu.cn/info/2348/4856.htm"},
+                {n:"韩建", u:"中国科学院水生生物研究所", l:"https://people.ucas.ac.cn/http:/people.ucas.ac.cn/~IHB_hanjian"},
+                {n:"韩星", u:"上海交通大学", l:"https://sese.sjtu.edu.cn/faculty/view/166"},
+                {n:"韩沂琏", u:"南开大学环境科学与工程学院", l:"https://tjusee.tju.edu.cn/info/1120/2911.htm"},
+                {n:"郝放", u:"江南大学", l:"https://see.jiangnan.edu.cn/info/1018/6619.htm"},
+                {n:"何广智", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~0054490"},
+                {n:"何建辉", u:"香港中文大学", l:"https://sphpc.cuhk.edu.hk/kinfaiho/"},
+                {n:"何小松", u:"中国环境科学研究院", l:"https://www.x-mol.com/university/faculty/319694"},
+                {n:"洪锋", u:"三峡大学", l:"https://coursehome.zhihuishu.com/courseHome/1000002353/152257/19#teachTeam"},
+                {n:"侯德义", u:"清华大学", l:"https://www.env.tsinghua.edu.cn/info/1263/6916.htm"},
+                {n:"侯佳奇", u:"中国环境科学研究院", l:""},
+                {n:"侯胜利", u:"南开大学", l:"https://sfs.nankai.edu.cn/hj1/listm.htm"},
+                {n:"黄笛", u:"三峡大学", l:""},
+                {n:"黄贵祥", u:"中国科学技术大学", l:"https://ese.ustc.edu.cn/2022/0923/c26809a570944/page.htm"},
+                {n:"黄海鹏", u:"北京林业大学", l:""},
+                {n:"黄建林", u:"华南理工大学", l:"https://www2.scut.edu.cn/cese/27058/main.psp"},
+                {n:"黄开波", u:"海南大学", l:"https://sese.hainanu.edu.cn/info/1544/1704.htm"},
+                {n:"黄垒", u:"上海大学", l:"https://scicol.shu.edu.cn/szdw/faculty/hl1.htm"},
+                {n:"黄裕熙", u:"中山大学", l:"https://sese.sysu.edu.cn/teacher/4776"},
+                {n:"黄壮松", u:"哈尔滨工业大学", l:"https://mjgroup.hit.edu.cn/2023/0731/c14452a321643/page.htm"},
+                {n:"华煜", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zyjs/js_zljs_/H/hy.htm"},
+                {n:"胡承志", u:"中国科学院生态环境研究中心", l:"https://rcees.cas.cn/yj/zgj/202401/t20240125_6970369.html"},
+                {n:"胡春", u:"广州大学", l:"https://baike.baidu.com/item/%E8%83%A1%E6%98%A5/10225269"},
+                {n:"胡敬平", u:"华中科技大学", l:"http://faculty.hust.edu.cn/hujingping/zh_CN/index/1041881/list/index.htm"},
+                {n:"胡康", u:"中国科学院赣江创新研究院", l:"http://jtxn-infinite.com/list_34/430.html"},
+                {n:"胡晓兰", u:"暨南大学", l:"https://dqs.jnu.edu.cn/2024/0424/c5174a811393/page.htm"},
+                {n:"胡艳军", u:"浙江工业大学", l:"https://homepage.zjut.edu.cn/hyj/"},
+                {n:"蒋红梅", u:"南京农业大学", l:"https://faculty.njau.edu.cn/jianghongmei/zh_CN/index.htm"},
+                {n:"姜杰", u:"哈尔滨工业大学", l:"https://www.x-mol.com/university/faculty/305050"},
+                {n:"江莉龙", u:"福州大学", l:"https://www.fzu.edu.cn/info/1049/43932.htm"},
+                {n:"江霞", u:"四川大学", l:"http://ccnft.scu.edu.cn/tzhktz/tdcy/js.htm"},
+                {n:"蒋一得", u:"海南大学", l:""},
+                {n:"江梓聪", u:"暨南大学", l:"https://www.x-mol.com/groups/zhums/people/91905"},
+                {n:"景佳娜", u:"北京工业大学", l:""},
+                {n:"孔令超", u:"宁波东方理工大学", l:"https://www.patent9.com/search.aspx?k=%e5%ad%94%e4%bb%a4%e8%b6%85"},
+                {n:"孔淑琼", u:"长江大学", l:"https://xueshu.baidu.com/scholarID/CN-BX75SMKJ?site=xueshu_ri"},
+                {n:"孔祥贵", u:"北京化工大学", l:"https://faculty.buct.edu.cn/chemistry/kxg/main.htm"},
+                {n:"蓝文陆", u:"广西壮族自治区海洋环境监测中心站", l:"http://sthjt.gxzf.gov.cn/"},
+                {n:"梁芳雨", u:"广西大学", l:""},
+                {n:"梁恒", u:"哈尔滨工业大学", l:"https://homepage.hit.edu.cn/liangheng?lang=zh"},
+                {n:"梁鹏", u:"清华大学", l:"https://www.env.tsinghua.edu.cn/info/1261/7331.htm"},
+                {n:"梁旭阳", u:"南方科技大学", l:"https://front-sci.com/journal/article?doi=10.12238/eep.v5i6.1659"},
+                {n:"李超", u:"东北师范大学", l:"https://hjxy.nenu.edu.cn/info/1021/1932.htm"},
+                {n:"李芳", u:"中国科学院深圳先进技术研究院", l:"https://bme.ustc.edu.cn/2021/1115/c29106a532925/page.htm"},
+                {n:"李芳柏", u:"广东省科学院生态环境与土壤研究所", l:"https://baike.baidu.com/item/%E6%9D%8E%E8%8A%B3%E6%9F%8F/23429730"},
+                {n:"李会泉", u:"中国科学院过程工程研究所", l:"https://people.ucas.ac.cn/~hqli"},
+                {n:"李江山", u:"中国科学院院武汉岩土力学研究所", l:"https://whrsm.cas.cn/sourcedb/zw/zjrck/201905/t20190528_5302936.html"},
+                {n:"李林森", u:"河北大学", l:"https://gwxy.hbu.edu.cn/shizi/view_512.html"},
+                {n:"李林潇", u:"南开大学", l:""},
+                {n:"李楠", u:"天津大学", l:"http://faculty.tju.edu.cn/116110/zh_CN/"},
+                {n:"凌岚", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zjjs/js/L/ll.htm"},
+                {n:"凌力", u:"北京师范大学", l:"https://tecs.bnu.edu.cn/szdw/zg/aa4a33ce1bdc415b87e0f0ca240fd5c8.htm"},
+                {n:"林琳", u:"清华大学深圳国际研究生院", l:"https://www.sigs.tsinghua.edu.cn/ll2/main.htm"},
+                {n:"林世权", u:"北京理工大学", l:"https://me.bit.edu.cn/szdw/jsml/zzgcx/szhzzyjs/sssds12/21dd0a67ae5f4a8a829e263b44"},
+                {n:"林岩", u:"南开大学", l:"https://env.nankai.edu.cn/2021/0406/c14180a349577/pagem.htm"},
+                {n:"李倩", u:"西安建筑科技大学", l:"https://faculty.xauat.edu.cn/liqian/zh_CN/index/4249/list/index.htm"},
+                {n:"李倩倩", u:"中国科学院生态环境研究中心", l:"https://rcees.cas.cn/yj/fgj/202401/t20240125_6970518.html"},
+                {n:"李庆", u:"复旦大学", l:"https://environment.fudan.edu.cn/b5/dd/c26241a308701/page.htm"},
+                {n:"李诗宇", u:"中国科学院生态环境研究中心", l:"http://www.rcees.ac.cn/dqyd/gzdt/202412/t20241202_7449383.html"},
+                {n:"李思宇", u:"中国科学院生态环境研究中心", l:""},
+                {n:"刘爱荣", u:"同济大学", l:"https://sese.tongji.edu.cn/info/2238/6573.htm"},
+                {n:"刘东风", u:"中国科学技术大学", l:"https://faculty.ustc.edu.cn/liudongfeng1/en/index.htm"},
+                {n:"刘菲", u:"中国地质大学（北京）", l:"https://www.scholarmate.com/P/bmIvQn"},
+                {n:"刘公平", u:"南京工业大学", l:"https://www.chemsoc.org.cn/talent/t3457.html"},
+                {n:"刘宏伟", u:"浙江大学", l:"https://person.zju.edu.cn/0009862"},
+                {n:"刘焕良", u:"江南大学", l:"http://wxms.jiangnan.edu.cn/info/1459/6839.htm"},
+                {n:"刘晖", u:"仲恺农业工程学院", l:"https://hjxy.zhku.edu.cn/info/1007/1482.htm"},
+                {n:"刘会娟", u:"清华大学", l:"https://www.env.tsinghua.edu.cn/info/1273/5876.htm"},
+                {n:"刘建国", u:"北京大学", l:"https://cese.pku.edu.cn/szdw/zzjs/index.htm"},
+                {n:"刘敬妤", u:"华南师范大学", l:"https://psy.scnu.edu.cn/a/20250325/147.html"},
+                {n:"刘猛", u:"大连理工大学", l:"https://faculty.dlut.edu.cn/2017011069/zh_CN/index/986911/list/index.htm"},
+                {n:"刘睿", u:"中国科学院生态环境研究中心", l:"https://rcees.cas.cn/yj/qch/yx/202312/t20231218_6914311.html"},
+                {n:"刘文", u:"北京大学", l:"https://www.sohu.com/a/823084108_121124776"},
+                {n:"刘武军", u:"中国科学技术大学", l:"https://faculty.ustc.edu.cn/liuwujun/zh_CN/lwcg/165196/list/"},
+                {n:"刘湘", u:"三峡大学", l:"http://clyhg.ctgu.edu.cn/info/1015/5349.htm"},
+                {n:"刘贤伟", u:"中国科学技术大学", l:"https://scms.ustc.edu.cn/2017/1114/c13452a207988/pagem.htm"},
+                {n:"刘小平", u:"江西农业大学", l:"https://guotu.jxau.edu.cn/info/1019/21041.htm"},
+                {n:"刘行韬", u:"中国地质大学（武汉）", l:""},
+                {n:"刘学明", u:"中南大学", l:"https://faculty.csu.edu.cn/liuxueming/zh_CN/lwcg/212051/content/59521.htm"},
+                {n:"刘艳臣", u:"清华大学", l:"https://www.env.tsinghua.edu.cn/info/1261/6089.htm"},
+                {n:"刘阳生", u:"北京大学", l:"https://baike.baidu.com/item/%E5%8A%89%E9%99%BD%E7%94%9F/13862277"},
+                {n:"刘艳明", u:"大连理工大学", l:"https://faculty.dlut.edu.cn/2016011121/zh_CN/index.htm"},
+                {n:"刘元", u:"中国科学院重庆绿色智能技术研究院", l:"https://people.ucas.ac.cn/~liuyuan83227"},
+                {n:"刘雨溪", u:"北京工业大学", l:"https://www.bjut.edu.cn/info/1060/3188.htm"},
+                {n:"刘禹", u:"南开大学", l:""},
+                {n:"刘泽源", u:"浙江大学", l:"https://scholar.google.com/citations?user=YQejtl4AAAAJ&hl=en"},
+                {n:"刘志博", u:"北京大学", l:"https://www.chem.pku.edu.cn/szll/zzjs/yyhxyjs/97037.htm"},
+                {n:"刘志明", u:"北京化工大学", l:"https://faculty.buct.edu.cn/chem/lzm2/main.htm"},
+                {n:"李万斌", u:"暨南大学", l:"https://cec.jnu.edu.cn/2024/0613/c40670a815497/page1.htm"},
+                {n:"李响", u:"东华大学", l:"https://www.dhu.edu.cn/2023/0420/c18934a418007/pagem.htm"},
+                {n:"李贤辉", u:"广东工业大学", l:"https://www.gdut.edu.cn/info/1959/18797.htm"},
+                {n:"李心砚", u:"广东工业大学", l:"https://teacher.gdut.edu.cn/lixinyan1/zh_CN/index.htm"},
+                {n:"李烨", u:"南开大学", l:"https://www.x-mol.com/university/faculty/63725"},
+                {n:"黎永杰", u:"澳门大学", l:"https://www.fst.um.edu.mo/people/yongjieli/"},
+                {n:"李志", u:"暨南大学", l:"https://www.x-mol.com/groups/zhums/people/15062"},
+                {n:"李志鹏", u:"中国石油化工股份有限公司胜利油田分公司", l:"http://a.xueshu.baidu.com/scholarID/CN-BJHAHDDK"},
+                {n:"李志远", u:"中山大学", l:"https://phs.sysu.edu.cn/zh-hans/teacher/610"},
+                {n:"龙明策", u:"上海交通大学", l:"https://sese.sjtu.edu.cn/faculty/view/10"},
+                {n:"罗玖", u:"苏州大学", l:"https://web.suda.edu.cn/future/2023/1130/c43329a26638/page.psp"},
+                {n:"罗磊", u:"中国科学院生态环境研究中心", l:"https://rcees.cas.cn/yj/fgj/202401/t20240125_6970541.html"},
+                {n:"罗旭彪", u:"井冈山大学", l:"https://www.jgsu.edu.cn/info/1017/1055.htm"},
+                {n:"吕碧洪", u:"华侨大学", l:"https://faculty.hqu.edu.cn/huanjinghuagongtuandui/zh_CN/tdcy/212519/content/1091.htm"},
+                {n:"吕维扬", u:"浙江理工大学", l:"https://mat.zstu.edu.cn/info/1097/4758.htm"},
+                {n:"吕兴霖", u:"中国科学技术大学", l:"https://faculty.ustc.edu.cn/~NBB7jm/zh_CN/"},
+                {n:"吕学斌", u:"西藏大学", l:"https://ee.utibet.edu.cn/info/1027/1570.htm"},
+                {n:"麻春艳", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~0032492"},
+                {n:"马雷", u:"合肥工业大学", l:"https://faculty.hfut.edu.cn/~jeqEnm/zh_CN/index.htm"},
+                {n:"孟凡旭", u:"浙江海洋大学", l:""},
+                {n:"孟旭", u:"中国科学院兰州化学物理研究所", l:"https://people.ucas.ac.cn/~0067281"},
+                {n:"么艳彩", u:"上海交通大学", l:"https://sese.sjtu.edu.cn/faculty/view/114"},
+                {n:"苗菲", u:"济南大学", l:"https://zh.ujn.edu.cn/jsxq.htm?jsid=187"},
+                {n:"穆思图", u:"河北科技大学", l:"https://hjxy.web.hebust.edu.cn/zsjy/yjszs/sssds/zsds/"},
+                {n:"南康康", u:"中国科学院生态环境研究中心", l:""},
+                {n:"聂纯阳", u:"东莞理工学院", l:"https://www.scholarmate.com/P/7nA36n"},
+                {n:"聂玮", u:"南京大学", l:"https://as.nju.edu.cn/29/3f/c11339a534847/page.htm"},
+                {n:"聂舟", u:"湖南大学", l:"https://grzy.hnu.edu.cn/site/index/niezhou"},
+                {n:"宁平", u:"昆明理工大学", l:"https://ese.kmust.edu.cn/info/1104/1853.htm"},
+                {n:"宁寻安", u:"广东工业大学", l:"https://hkxy.gdut.edu.cn/info/1165/3580.htm"},
+                {n:"牛红云", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~niuhongyun"},
+                {n:"潘飞", u:"武汉纺织大学", l:"https://www.scholarmate.com/P/rQjyEj"},
+                {n:"潘家峰", u:"南华大学", l:"https://gwxy.usc.edu.cn/info/1049/6797.htm"},
+                {n:"潘长桂", u:"广西大学", l:"https://ma.gxu.edu.cn/info/1022/3479.htm"},
+                {n:"裴紫薇", u:"国家食品安全风险评估中心", l:"https://www.zgggws.com/article/doi/10.11847/zgggws1123779?viewType=HTML"},
+                {n:"皮坤福", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/pikunfu/zh_CN/index/58876/list/index.htm"},
+                {n:"钱家忠", u:"合肥工业大学", l:"https://geoscience.hfut.edu.cn/info/1063/3908.htm"},
+                {n:"乔文静", u:"南京农业大学", l:"http://faculty.njau.edu.cn/qiaowenjing/zh_CN/index/145017/list/"},
+                {n:"秦传玉", u:"吉林大学", l:"http://cer.jlu.edu.cn/info/1004/3104.htm"},
+                {n:"邱辉阳", u:"河海大学", l:"https://jszy.hhu.edu.cn/qhy/"},
+                {n:"邱建华", u:"广西师范大学", l:"http://www.ce.gxnu.edu.cn/qjh/list.htm"},
+                {n:"桑瑞", u:"杭州市北京航空航天大学国际创新研究院", l:""},
+                {n:"邵志伟", u:"复旦大学", l:""},
+                {n:"盛桦", u:"中国科学院化学研究所", l:"http://lpcas.iccas.ac.cn/document.action?docid=61687"},
+                {n:"沈锦优", u:"南京理工大学", l:"https://ebe.njust.edu.cn/81/57/c5051a229719/page.htm"},
+                {n:"沈意", u:"浙江工业大学", l:"https://homepage.zjut.edu.cn/shenyi"},
+                {n:"沈益忠", u:"合肥工业大学", l:"http://spysw.hfut.edu.cn/info/1103/4326.htm"},
+                {n:"石川", u:"大连理工大学", l:"http://team.dlut.edu.cn/denglizticuihua/zh_CN/tdld/1153985/list/index.htm"},
+                {n:"石亮亮", u:"海南大学", l:"https://sese.hainanu.edu.cn/info/1544/1614.htm"},
+                {n:"宋利君", u:"苏州热工研究院有限公司", l:""},
+                {n:"隋倩", u:"华东理工大学", l:"https://zhxy.ecust.edu.cn/2016/0407/c6506a44706/page.htm"},
+                {n:"孙家正", u:"中国地质大学（武汉）", l:"http://www.xxxedu.net/articlenew.php?id=102069"},
+                {n:"孙猛", u:"中国科学院生态环境研究中心", l:""},
+                {n:"孙佩哲", u:"天津大学", l:"http://faculty.tju.edu.cn/166028/zh_CN/index/29458/list/index.htm"},
+                {n:"孙雪菲", u:"合肥工业大学", l:"http://geoscience.hfut.edu.cn/en/info/1045/1215.htm"},
+                {n:"孙轶斐", u:"海南大学", l:"https://sese.hainanu.edu.cn/info/1534/1464.htm"},
+                {n:"孙媛媛", u:"南京大学", l:"https://es.nju.edu.cn/sunyy/listm.htm"},
+                {n:"苏小四", u:"吉林大学", l:"https://teachers.jlu.edu.cn/SXS2/en/index.htm"},
+                {n:"唐崇俭", u:"中南大学", l:"https://faculty.csu.edu.cn/tangchongjian/zh_CN/index.htm"},
+                {n:"汤初阳", u:"香港大学", l:"https://www.x-mol.com/university/faculty/337365"},
+                {n:"唐鸿志", u:"上海交通大学", l:"https://faculty.sjtu.edu.cn/tanghongzhi/zh_CN/more/177203/jsjjgd/index.htm"},
+                {n:"唐建辉", u:"中国科学院烟台海岸带研究所", l:"https://people.ucas.ac.cn/~0008775"},
+                {n:"童蕾", u:"中国地质大学（武汉）", l:"https://www.scholarmate.com/P/7BF3Uv"},
+                {n:"童美萍", u:"北京大学", l:"https://baike.baidu.com/item/%E7%AB%A5%E7%BE%8E%E8%90%8D/10786994"},
+                {n:"王丁一", u:"中国科学院生态环境研究中心", l:"https://rcees.cas.cn/yj/fgj/202401/t20240125_6970679.html"},
+                {n:"王刚", u:"广东工业大学", l:"https://glxy.gdut.edu.cn/info/1292/29038.htm"},
+                {n:"王冠", u:"广东工业大学", l:"https://hkxy.gdut.edu.cn/info/1163/4284.htm"},
+                {n:"王海洋", u:"安捷伦科技（中国）有限公司", l:"https://www.agilent.com/cs/library/applications/5994-6122ZHCN.pdf"},
+                {n:"王鸿程", u:"哈尔滨工业大学（深圳）", l:"https://homepage.hit.edu.cn/wanghongcheng"},
+                {n:"张登松", u:"上海大学", l:"https://www.shu.edu.cn/info/1609/76668.htm"},
+                {n:"汪磊", u:"南开大学", l:"https://news.nankai.edu.cn/ztbd/system/2021/09/04/030047766.shtml"},
+                {n:"汪黎东", u:"华北电力大学", l:"https://cese.ncepu.edu.cn/szdw/js1/e0853cf0967948b3918140478215279c.htm"},
+                {n:"王敏", u:"中国科学院生态环境研究中心", l:"https://www.isa.cas.cn/sourcedb/zw/zjrc/202012/t20201222_5873114.html"},
+                {n:"王宁", u:"海南大学", l:""},
+                {n:"王盼盼", u:"哈尔滨工业大学", l:"http://mjgroup.hit.edu.cn/2022/0221/c14452a268833/page.htm"},
+                {n:"王鹏飞", u:"南开大学", l:"https://imo.nankai.edu.cn/femto/cDetailWangpengfei.html"},
+                {n:"王璞", u:"北京航空航天大学", l:"https://shi.buaa.edu.cn/puwang101/zh_CN/"},
+                {n:"王树荣", u:"浙江大学", l:"https://person.zju.edu.cn/0099169/736500.html"},
+                {n:"王韬", u:"香港理工大学", l:"https://www.polyu.edu.hk/cee/~cetwang/index.html"},
+                {n:"王文翰", u:"南开大学", l:"https://ipis.nankai.edu.cn/achievement/1053/"},
+                {n:"王文雄", u:"香港城市大学", l:"https://www.x-mol.com/groups/Wang_wenxiong/people/2767"},
+                {n:"王县伟", u:"中国科学院生态环境研究中心", l:"https://people.ucas.ac.cn/~0079256"},
+                {n:"王鑫", u:"南开大学", l:"https://env.nankai.edu.cn/2019/0612/c14180a178062/page.htm"},
+                {n:"王训", u:"中国科学院地球化学研究所", l:"https://people.ucas.ac.cn/~0069401"},
+                {n:"王晔", u:"北京航空航天大学", l:"https://sepe.buaa.edu.cn/info/1118/8125.htm"},
+                {n:"王邑维", u:"北京科技大学", l:"https://seee.ustb.edu.cn/szdw/jsjs/ad32d96935934fa68e39e115cba175de.htm"},
+                {n:"王樟新", u:"广东工业大学", l:"https://www.gdut.edu.cn/info/1959/18828.htm"},
+                {n:"王哲", u:"香港科技大学", l:"http://envrwangz.people.ust.hk/"},
+                {n:"王钟颍", u:"南方科技大学", l:"https://www.sustech.edu.cn/zh/faculties/wangzhongying.html"},
+                {n:"万祎", u:"北京大学", l:"https://ues.pku.edu.cn/jszy/wy/wygrjl/c7dd9ed0a0d24987a0a55ba6c47a4bed.htm"},
+                {n:"魏伟", u:"中国科学院上海高等研究院", l:"https://people.ucas.ac.cn/~0001652"},
+                {n:"魏振", u:"北京工业大学", l:"https://yanzhao.bjut.edu.cn/info/1520/13658.htm"},
+                {n:"翁小乐", u:"浙江大学", l:"https://person.zju.edu.cn/weng_xiaole"},
+                {n:"吴德礼", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zjjs/js/W/wdl/jyjgzjl.htm"},
+                {n:"伍迪", u:"中国科学院重庆绿色智能技术研究院", l:"http://cigit-swr.com/tdcy/bsh/714.html"},
+                {n:"武嘉龙", u:"中国地质大学（武汉）", l:""},
+                {n:"吴鸣", u:"暨南大学", l:"https://faculty.jnu.edu.cn/smkx/wm2/"},
+                {n:"吴少华", u:"广东石油化工学院", l:"https://site.gdupt.edu.cn/hjxy/info/1091/2660.htm"},
+                {n:"邬文浩", u:"浙江大学", l:"https://person.zju.edu.cn/0019190/0.html"},
+                {n:"巫寅虎", u:"清华大学", l:"https://www.env.tsinghua.edu.cn/info/1269/6374.htm"},
+                {n:"吴永宁", u:"国家食品安全风险评估中心", l:"https://baike.baidu.com/item/吴永宁"},
+                {n:"吴玉锋", u:"北京工业大学", l:"https://www.bjut.edu.cn/info/1059/3690.htm"},
+                {n:"吴玉龙", u:"新疆大学", l:"https://hgxy.xju.edu.cn/info/1022/1557.htm"},
+                {n:"吴振涛", u:"浙江工业大学", l:""},
+                {n:"夏德华", u:"中山大学", l:"https://sese.sysu.edu.cn/teacher/4061"},
+                {n:"肖紫怡", u:"长江大学", l:"https://dqhx.yangtzeu.edu.cn/info/1125/3848.htm"},
+                {n:"夏前程", u:"南京大学", l:"https://pangroup.nju.edu.cn/e9/51/c18265a715089/page.htm"},
+                {n:"席北斗", u:"中国环境科学研究院", l:"https://www.craes.cn/rcdw/zgjgcs/yld/202504/t20250410_1113761.shtml"},
+                {n:"辛佳", u:"中国海洋大学", l:"https://baike.baidu.com/item/%E8%BE%9B%E4%BD%B3/22825036"},
+                {n:"薛涛", u:"北京大学", l:"http://scholar.pku.edu.cn/taoxue"},
+                {n:"徐红霞", u:"南京大学", l:"https://baike.baidu.com/item/%E5%BE%90%E7%BA%A2%E9%9C%9E/24143546"},
+                {n:"徐江", u:"浙江大学", l:"https://person.zju.edu.cn/0021024"},
+                {n:"徐盼盼", u:"长安大学", l:"https://js.chd.edu.cn/hjkxygcxy/xpp/list.htm"},
+                {n:"许荣明", u:"南京大学", l:"https://pangroup.nju.edu.cn/e9/66/c18253a715110/pagem.htm"},
+                {n:"徐舒", u:"华南师范大学", l:"http://seri.scnu.edu.cn/PeopleCN/jiangshi/2024/1021/580.html"},
+                {n:"徐挺", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zyjs/js/X/xt.htm"},
+                {n:"许醒", u:"山东大学", l:"https://www.qdxq.sdu.edu.cn/info/1824/62034.htm"},
+                {n:"严冰", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/yanbing/zh_CN/index.htm"},
+                {n:"杨家宽", u:"华中科技大学", l:"http://faculty.hust.edu.cn/yangjiakuan/zh_CN/index.htm"},
+                {n:"杨利明", u:"南昌航空大学", l:"http://huanhua.nchu.edu.cn/szll/jsxx/content_146729"},
+                {n:"杨世迎", u:"中国海洋大学", l:"https://cese.ouc.edu.cn/2022/0405/c26423a366757/page.htm"},
+                {n:"杨新", u:"南方科技大学", l:"https://ese.sustech.edu.cn/wap/content/teacher2/nid/102/id/62.html"},
+                {n:"杨欣", u:"中山大学", l:"https://sese.sysu.edu.cn/teacher/4021"},
+                {n:"杨雪晶", u:"华东理工大学", l:"https://faculty.ecust.edu.cn/mech/yxj2/main.htm"},
+                {n:"杨雨佳", u:"燕山大学", l:"https://web.ysu.edu.cn/yangyujia/zh_CN/index.htm"},
+                {n:"杨蕴", u:"河海大学", l:"https://dxy.hhu.edu.cn/2017/0412/c6458a93859/pagem.psp"},
+                {n:"杨铸", u:"香港浸会大学", l:"https://chem.hkbu.edu.hk/people/show/19"},
+                {n:"严建华", u:"浙江大学", l:"https://person.zju.edu.cn/yanjh"},
+                {n:"颜能", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/yanneng/zh_CN/index.htm"},
+                {n:"姚婧知", u:"复旦大学", l:""},
+                {n:"姚林林", u:"中国科学院生态环境研究中心", l:""},
+                {n:"姚枭", u:"福建理工大学", l:"https://faculty.fjut.edu.cn/yaoxiao/en/index.htm"},
+                {n:"叶宇昕", u:"中山大学", l:"https://cet.sysu.edu.cn/node/1279"},
+                {n:"叶志豪", u:"香港岭南大学", l:"https://scholars.ln.edu.hk/en/persons/chi-ho-ip/"},
+                {n:"尹华意", u:"武汉大学", l:"https://sres.whu.edu.cn/info/3231/300911.htm"},
+                {n:"尹茂生", u:"宁波东方理工大学", l:""},
+                {n:"殷冉", u:"南京大学", l:"https://njusz.nju.edu.cn/e4/f4/c52366a648436/page.htm"},
+                {n:"袁松虎", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/yuansonghu/zh_CN/index/53901/list/"},
+                {n:"袁宪正", u:"山东大学", l:"https://www.huanke.sdu.edu.cn/info/1104/4584.htm"},
+                {n:"于南洋", u:"南京大学", l:"https://hjxy.nju.edu.cn/szdw/hjkxx/fjs/20230517/i246599.html"},
+                {n:"于晓龙", u:"广东石油化工学院", l:"https://www.gdupt.edu.cn/hjxy/info/1091/2667.htm"},
+                {n:"于学华", u:"沈阳师范大学", l:"https://hxhg.synu.edu.cn/yxh/list.htm"},
+                {n:"张弛", u:"国家食品安全风险评估中心", l:""},
+                {n:"张春磊", u:"国家能源集团科学技术研究院有限公司", l:"http://cestri.chnenergy.com.cn/"},
+                {n:"张蝶青", u:"上海师范大学", l:"https://reskl.shnu.edu.cn/97/11/c18408a497425/page.htm"},
+                {n:"张弓", u:"清华大学", l:"https://www.me.tsinghua.edu.cn/info/1103/1604.htm"},
+                {n:"张海燕", u:"国科大杭州高等研究院", l:"https://people.ucas.ac.cn/~0068945"},
+                {n:"章骅", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zjjs/js/Z/zh1.htm"},
+                {n:"张进", u:"上海大学", l:"https://auto.shu.edu.cn/info/1340/12492.htm"},
+                {n:"张静", u:"哈尔滨工业大学", l:"https://mjgroup.hit.edu.cn/2022/1029/c14452a283276/page.htm"},
+                {n:"张丽", u:"自然资源部第四海洋研究所", l:""},
+                {n:"张亮", u:"北京工业大学", l:"https://www.bjut.edu.cn/info/1060/1508.htm"},
+                {n:"张礼知", u:"上海交通大学", l:"https://irongroup.sjtu.edu.cn/people/1"},
+                {n:"张梦玥", u:"中国科学院重庆绿色智能技术研究院", l:"http://www.cigit-swr.com/tdcy/bsh/715.html"},
+                {n:"张鹏", u:"中国科学技术大学", l:"https://faculty.ustc.edu.cn/zhangpeng1/zh_CN/index.htm"},
+                {n:"张强英", u:"西藏大学", l:"https://ee.utibet.edu.cn/info/1029/1485.htm"},
+                {n:"张庆磊", u:"烟台金正环保科技有限公司", l:""},
+                {n:"张清哲", u:"山东大学", l:"https://faculty.sdu.edu.cn/zhangqingzhe/zh_CN/index/1398477/list/"},
+                {n:"张瑞杰", u:"广西大学", l:"https://ma.gxu.edu.cn/info/1003/1334.htm"},
+                {n:"张士汉", u:"浙江工业大学", l:"https://homepage.zjut.edu.cn//zsh2020/"},
+                {n:"张淑娟", u:"南京大学", l:"https://hjxy.nju.edu.cn/szdw/hjgcx/js/20210604/i201783.html"},
+                {n:"张望龙", u:"曲阜师范大学", l:"https://sky.qfnu.edu.cn/info/1067/1724.htm"},
+                {n:"张伟军", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/zhangweijun/zh_CN/kyxm/5721/content/1938.htm"},
+                {n:"张卫平", u:"广东工业大学", l:"https://teacher.gdut.edu.cn/zhangweiping/zh_CN/more/148363/jsjjgd/"},
+                {n:"张笑千", u:"五邑大学", l:"https://www.wyu.edu.cn/sece/info/1891/11861.htm"},
+                {n:"张潇源", u:"清华大学", l:"https://baike.baidu.com/item/张潇源"},
+                {n:"张鑫", u:"南方科技大学", l:""},
+                {n:"张秀辉", u:"北京理工大学", l:"https://baike.baidu.com/item/%E5%BC%A0%E7%A7%80%E8%BE%89/63674709"},
+                {n:"张亚男", u:"中国地质大学（武汉）", l:"https://grzy.cug.edu.cn/zhangyanan/zh_CN/index/78788/list/index.htm"},
+                {n:"张耀斌", u:"大连理工大学", l:"https://faculty.dlut.edu.cn/2005011108/zh_CN/index.htm"},
+                {n:"张业新", u:"中国科学院宁波材料技术与工程研究所", l:"https://people.ucas.ac.cn/~0046500"},
+                {n:"张祎凡", u:"浙江大学", l:"https://person.zju.edu.cn/zhangyi"},
+                {n:"张英", u:"南开大学", l:"https://env.nankai.edu.cn/2019/0612/c14182a178388/page.htm"},
+                {n:"张颖捷", u:"中国科学技术大学", l:"https://team.ustc.edu.cn/hqyulab_en/en/tdcy/651601/content/2217.htm"},
+                {n:"张毓然", u:"中国科学院地质与地球物理研究所", l:"https://people.ucas.ac.cn/~0075707"},
+                {n:"张志强", u:"同济大学", l:"https://sese.tongji.edu.cn/szdw/zjjs/fjs_fyjy_/Z/zzq.htm"},
+                {n:"张作泰", u:"南方科技大学", l:"https://www.sustech.edu.cn/zh/faculties/english-zhang-zuotai.html"},
+                {n:"詹望成", u:"华东理工大学", l:"https://chem.ecust.edu.cn/2014/1113/c6655a50380/page.htm"},
+                {n:"赵晨", u:"北京建筑大学", l:"https://faculty.bucea.edu.cn/pub/zhaochen/"},
+                {n:"赵和平", u:"浙江大学", l:"https://person.zju.edu.cn/zhaoheping"},
+                {n:"赵华章", u:"北京大学/山西大学", l:"https://hzy.sxu.edu.cn/szdw/hjgcx/jiaos2/15d16208ac8a48f2a85ee70834d358ce.htm"},
+                {n:"赵建亮", u:"华南师范大学", l:"https://module.scnu.edu.cn/index.php?a=show&name=jianliangzhao"},
+                {n:"赵甲亭", u:"浙江大学", l:"https://person.zju.edu.cn/zhaojt"},
+                {n:"赵世新", u:"澳大利亚新南威尔士大学", l:""},
+                {n:"赵阳莹", u:"厦门大学", l:"https://cee.xmu.edu.cn/info/1031/9424.htm"},
+                {n:"赵迎新", u:"天津大学", l:"https://faculty.tju.edu.cn/146051/zh_CN/index.htm"},
+                {n:"赵聿徵", u:"清华大学", l:"https://c.m.163.com/news/a/KDOJO3IK05565ZLF.html"},
+                {n:"郑成斌", u:"四川大学", l:"https://chem.scu.edu.cn/info/1047/1058.htm"},
+                {n:"郑天亮", u:"成都理工大学", l:"https://sthjxy.cdut.edu.cn/info/1104/3449.htm"},
+                {n:"周丹丹", u:"东北师范大学", l:"https://hjxy.nenu.edu.cn/info/1161/3443.htm"},
+                {n:"周升华", u:"香港大学", l:"https://polymer.nimte.ac.cn/view-29566.html"},
+                {n:"周宗尧", u:"哈尔滨工业大学", l:"http://mjgroup.hit.edu.cn/2022/1029/c14452a338852/page.htm"},
+                {n:"朱璧然", u:"湖北中医药大学", l:"https://jc.hbtcm.edu.cn/"},
+                {n:"朱冬", u:"中国科学院城市环境研究所", l:"https://people.ucas.ac.cn/~0072050"},
+                {n:"朱龙", u:"中国疾病预防控制中心", l:"https://iehs.chinacdc.cn/gzdt/202509/t20250901_310076.html"},
+                {n:"朱赛勇", u:"浙江生态文明研究院", l:"https://www.zeca.ac.cn/h-col-152.html"},
+                {n:"朱文磊", u:"南京大学", l:"https://hjxy.nju.edu.cn/szdw/zzjsagw/js/20210814/i204908.html"},
+                {n:"朱宇君", u:"黑龙江大学", l:"https://www.hlju.edu.cn/info/1232/12945.htm"}
+            ];
+
+            const list = document.getElementById('list');
+            const status = document.getElementById('status');
+
+            function doSearch() {
+                try {
+                    const val = document.getElementById('inp').value.toLowerCase().trim();
+                    
+                    if (!val) {
+                        list.innerHTML = '<div class="tip">请输入姓名或单位进行查询</div>';
+                        return;
+                    }
+
+                    const res = data.filter(item => 
+                        (item.n && item.n.toLowerCase().includes(val)) || 
+                        (item.u && item.u.toLowerCase().includes(val))
+                    );
+
+                    if (res.length === 0) {
+                        list.innerHTML = '<div class="tip">未找到匹配的结果</div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    res.forEach(item => {
+                        let targetLink = item.l;
+                        let tagName = "🔗 详细资料";
+                        
+                        if (!targetLink || targetLink.length < 5) {
+                            targetLink = `https://www.baidu.com/s?wd=${encodeURIComponent(item.u + " " + item.n)}`;
+                            tagName = "🔍 百度搜索";
+                        }
+
+                        // 在标准浏览器中，直接使用 a 标签是最简单可靠的方式
+                        html += `
+                            <a href="${targetLink}" target="_blank" class="card-link">
+                                <div class="name">${item.n}</div>
+                                <div class="unit">${item.u}</div>
+                                <div class="tag ${tagName.includes('百度')?'gray':''}">${tagName}</div>
+                            </a>
+                        `;
+                    });
+                    list.innerHTML = html;
+
+                } catch (e) {
+                    console.error("脚本错误:", e);
+                    list.innerHTML = '<div class="tip" style="color: red;">脚本发生错误，请联系开发者。</div>';
+                }
+            }
+
+            // 初始化
+            window.onload = function() {
+                status.innerText = "请在上方输入姓名或单位查询";
+            }
+        }
+    </script>
+</body>
+</html>
